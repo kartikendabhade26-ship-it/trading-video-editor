@@ -1,0 +1,321 @@
+:root {
+  /* Core Colors */
+  --bg-dark: #09090b;
+  --bg-panel: #18181b;
+  --bg-glass: rgba(24, 24, 27, 0.7);
+  --bg-glass-hover: rgba(39, 39, 42, 0.9);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-lighter: rgba(255, 255, 255, 0.2);
+
+  /* Trading Colors */
+  --bull-color: #10b981;
+  /* Emerald */
+  --bull-glow: rgba(16, 185, 129, 0.6);
+  --bear-color: #ef4444;
+  /* Red */
+  --bear-glow: rgba(239, 68, 68, 0.6);
+
+  /* Chart Accents */
+  --chart-grid: rgba(255, 255, 255, 0.05);
+  --accent-color: #3b82f6;
+  /* Blue */
+  --accent-glow: rgba(59, 130, 246, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Typography */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.tracking-wide {
+  letter-spacing: 0.05em;
+}
+
+.tracking-wider {
+  letter-spacing: 0.1em;
+}
+
+/* Panels */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Layout */
+.editor-layout {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "library canvas inspector"
+    "timeline timeline timeline";
+  grid-template-columns: 280px 1fr 300px;
+  grid-template-rows: 50px 1fr 200px;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  overflow: hidden;
+}
+
+/* New Layout Panels */
+.header-panel {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 10;
+}
+
+.library-panel {
+  grid-area: library;
+  border-right: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.canvas-panel {
+  grid-area: canvas;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at center, #1a1a1f 0%, #09090b 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.inspector-panel {
+  grid-area: inspector;
+  border-left: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.timeline-panel {
+  grid-area: timeline;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* UI Elements */
+.brand-title {
+  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, #60a5fa, #34d399);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.panel-section {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 1rem;
+}
+
+.panel-label {
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.btn {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  text-align: left;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-lighter);
+  color: #fff;
+}
+
+.btn-primary {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--bull-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  text-align: center;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--bear-color);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  text-align: center;
+  font-weight: 500;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.element-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Chart Canvas */
+.composition-frame {
+  width: 1920px;
+  height: 1080px;
+  background: var(--bg-dark);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--border-light);
+  overflow: hidden;
+  position: relative;
+  /* Zoom level managed via inline styles/motion */
+}
+
+.trading-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--chart-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--chart-grid) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+.chart-inner {
+  position: absolute;
+  inset: 0;
+  padding: 4rem;
+  /* Safe padding inside video */
+}
+
+/* Chart Components */
+.callout {
+  position: absolute;
+  min-width: 250px;
+  padding: 1rem 1.25rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.callout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.callout-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.callout-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.callout-title {
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.callout-desc {
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Pulse animation manually */
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
