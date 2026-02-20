@@ -5,15 +5,53 @@ import { TradingComposition } from './remotion/TradingComposition';
 import { editorReducer, initialState } from './utils/editorState';
 import SidebarProperties from './components/SidebarProperties';
 import ChartWrapper from './components/ChartWrapper';
-import { Loader2, MousePointer2, Plus, TrendingUp, MessageSquare, Play, Edit3 } from 'lucide-react';
+import { Loader2, MousePointer2, Plus, TrendingUp, MessageSquare, Play, Edit3, Upload } from 'lucide-react';
 import './index.css';
 
 function App() {
   const [editorState, dispatch] = useReducer(editorReducer, initialState);
   const playerRef = useRef<PlayerRef>(null);
   const [isRendering, setIsRendering] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'design' | 'preview'>('design');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const COMPOSITION_DURATION = 300;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/analyze-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to analyze image');
+      }
+
+      const data = await response.json();
+      if (data.candles && data.candles.length > 0) {
+        dispatch({ type: 'SET_CANDLES', payload: data.candles });
+        alert(`Successfully imported ${data.candles.length} candles!`);
+      } else {
+        alert("No candles detected in the image.");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to process image: " + error);
+    } finally {
+      setIsProcessing(false);
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleRender = async () => {
     try {
@@ -63,23 +101,49 @@ function App() {
           Trade Animator Pro <span className="text-xs text-zinc-500 font-normal ml-2">v2.0</span>
         </h1>
         <div className="flex-1" />
-        <button
-          onClick={handleRender}
-          disabled={isRendering}
-          className={`flex items-center gap-2 text-xs px-4 py-2 font-medium rounded transition-colors ${isRendering
-            ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'
-            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+        <div className="flex items-center gap-3">
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isProcessing}
+            className={`flex items-center gap-2 text-xs px-4 py-2 font-medium rounded transition-colors ${
+              isProcessing
+                ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700'
             }`}
-        >
-          {isRendering ? (
-            <>
+          >
+            {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-              Rendering MP4...
-            </>
-          ) : (
-            "Render High-Quality MP4"
-          )}
-        </button>
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Import Image
+          </button>
+
+          <button
+            onClick={handleRender}
+            disabled={isRendering}
+            className={`flex items-center gap-2 text-xs px-4 py-2 font-medium rounded transition-colors ${isRendering
+              ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'
+              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+              }`}
+          >
+            {isRendering ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Rendering MP4...
+              </>
+            ) : (
+              "Render High-Quality MP4"
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Left: Asset Library */}
