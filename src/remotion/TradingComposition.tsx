@@ -13,7 +13,7 @@ export const myCompSchema = z.object({
 });
 
 export const TradingComposition: React.FC<z.infer<typeof myCompSchema>> = ({ candles }) => {
-    const { fps, width, height } = useVideoConfig();
+    const { fps, width, height, durationInFrames } = useVideoConfig();
     const frame = useCurrentFrame();
 
     // Math for scaling
@@ -37,13 +37,21 @@ export const TradingComposition: React.FC<z.infer<typeof myCompSchema>> = ({ can
 
     const getY = (price: number) => chartHeight - ((price - paddedMin) * scaleY) + marginY;
 
-    // Camera movement
-    const scale = interpolate(frame, [0, 300], [1.05, 1], { extrapolateRight: 'clamp' });
-    const translateY = interpolate(frame, [0, 300], [0, -20], { extrapolateRight: 'clamp' });
+    // Camera movement - Pans slowly across the 60s
+    // Zoom in slowly over 60s
+    const scale = interpolate(frame, [0, durationInFrames], [1.02, 1.1], { extrapolateRight: 'clamp' });
+    const translateY = interpolate(frame, [0, durationInFrames], [0, -40], { extrapolateRight: 'clamp' });
 
     // Staggered text entrance
     const titleOpacity = spring({ frame: frame - 10, fps, config: { damping: 200 } });
     const subtitleOpacity = spring({ frame: frame - 30, fps, config: { damping: 200 } });
+
+    // Calculate when candles should appear to span the video duration
+    // If we have 10 candles and 60 seconds, we want them to appear one by one every 6 seconds?
+    // Or do we want them all to appear quickly then hold?
+    // Usually "Reels" are snappy. Let's make them appear over the first 50% of the video.
+    const candleEntranceDuration = durationInFrames * 0.5;
+    const delayPerCandle = candleEntranceDuration / Math.max(candles.length, 1);
 
     return (
         <AbsoluteFill style={{ backgroundColor: '#09090b', overflow: 'hidden' }}>
@@ -115,7 +123,8 @@ export const TradingComposition: React.FC<z.infer<typeof myCompSchema>> = ({ can
                         const lowY = getY(candle.low);
 
                         // Animation: Spring up from bottom + Opacity fade in
-                        const delay = i * 3;
+                        // Spread delay across the animation duration
+                        const delay = i * delayPerCandle;
                         const progress = spring({
                             frame: frame - delay,
                             fps,
