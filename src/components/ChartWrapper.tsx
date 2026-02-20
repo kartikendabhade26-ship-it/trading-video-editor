@@ -172,7 +172,7 @@ export default function ChartWrapper({ isPlaying, state, dispatch }: ChartWrappe
         const currentX = e.clientX - rect.left;
 
         if (sculptingTarget && state.mode === 'select') {
-            const { index, part, startY, startProp } = sculptingTarget;
+            const { index, part, startY } = sculptingTarget;
             const currentPrice = getPriceFromY(currentY);
             const startPrice = getPriceFromY(startY);
             const priceDelta = currentPrice - startPrice;
