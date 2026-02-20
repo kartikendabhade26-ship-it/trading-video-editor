@@ -5,6 +5,8 @@ import { renderMedia, selectComposition } from '@remotion/renderer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import multer from 'multer';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +20,74 @@ const outDir = path.join(__dirname, 'out');
 if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
 }
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+
+// Multer config for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage });
+
+app.post('/api/analyze-image', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No image file uploaded' });
+    }
+
+    const imagePath = req.file.path;
+    const pythonScript = path.join(__dirname, 'python_pipeline/src/vision/process_image.py');
+
+    console.log(`Processing image: ${imagePath}`);
+
+    // Spawn python process
+    const pythonProcess = spawn('python3', [pythonScript, imagePath]);
+
+    let dataString = '';
+    let errorString = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        errorString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Python process exited with code ${code}`);
+
+        // Clean up uploaded file
+        fs.unlink(imagePath, (err) => {
+            if (err) console.error("Error deleting temp file:", err);
+        });
+
+        if (code !== 0) {
+            console.error("Python script error:", errorString);
+            return res.status(500).json({ error: 'Failed to process image', details: errorString });
+        }
+
+        try {
+            const result = JSON.parse(dataString);
+            if (result.error) {
+                return res.status(500).json({ error: result.error });
+            }
+            res.json(result);
+        } catch (e) {
+            console.error("Failed to parse JSON from python script:", dataString);
+            res.status(500).json({ error: 'Invalid response from vision pipeline' });
+        }
+    });
+});
+
 
 app.post('/api/render', async (req, res) => {
     try {
