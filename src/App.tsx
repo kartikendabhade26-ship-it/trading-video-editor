@@ -14,6 +14,7 @@ function App() {
   const [isRendering, setIsRendering] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'design' | 'preview'>('design');
+  const [debugImageUrl, setDebugImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const COMPOSITION_DURATION = 300;
 
@@ -22,6 +23,7 @@ function App() {
     if (!file) return;
 
     setIsProcessing(true);
+    setDebugImageUrl(null);
     const formData = new FormData();
     formData.append('image', file);
 
@@ -39,7 +41,11 @@ function App() {
       const data = await response.json();
       if (data.candles && data.candles.length > 0) {
         dispatch({ type: 'SET_CANDLES', payload: data.candles });
-        alert(`Successfully imported ${data.candles.length} candles!`);
+        // Set debug image if available
+        if (data.debug_image_url) {
+            setDebugImageUrl(data.debug_image_url);
+        }
+        // alert(`Successfully imported ${data.candles.length} candles!`);
       } else {
         alert("No candles detected in the image.");
       }
@@ -171,6 +177,17 @@ function App() {
             + Add New Candle
           </button>
         </div>
+
+        {/* Debug View */}
+        {debugImageUrl && (
+          <div className="mb-6">
+             <h2 className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-2">OpenCV Vision Debug</h2>
+             <div className="rounded border border-emerald-500/30 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(debugImageUrl, '_blank')}>
+                <img src={debugImageUrl} alt="Vision Debug" className="w-full h-auto object-contain" />
+             </div>
+             <p className="text-[10px] text-zinc-500 mt-1">Green=Bull, Red=Bear. Click to enlarge.</p>
+          </div>
+        )}
 
         {editorState.candles.length > 0 && (
           <>

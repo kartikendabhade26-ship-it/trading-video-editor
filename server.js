@@ -27,6 +27,9 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
 
+// Serve uploads directory statically so frontend can access debug images
+app.use('/uploads', express.static(uploadsDir));
+
 // Multer config for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -67,10 +70,12 @@ app.post('/api/analyze-image', upload.single('image'), (req, res) => {
     pythonProcess.on('close', (code) => {
         console.log(`Python process exited with code ${code}`);
 
-        // Clean up uploaded file
-        fs.unlink(imagePath, (err) => {
-            if (err) console.error("Error deleting temp file:", err);
-        });
+        // Clean up uploaded file?
+        // If we want to serve the debug image (which is in uploadsDir), we should NOT delete the original or debug immediately if we want to view them.
+        // Let's keep them for now, or implement a cleanup strategy later.
+        // fs.unlink(imagePath, (err) => {
+        //     if (err) console.error("Error deleting temp file:", err);
+        // });
 
         if (code !== 0) {
             console.error("Python script error:", errorString);
@@ -81,6 +86,10 @@ app.post('/api/analyze-image', upload.single('image'), (req, res) => {
             const result = JSON.parse(dataString);
             if (result.error) {
                 return res.status(500).json({ error: result.error });
+            }
+            // Add full URL to debug image if present
+            if (result.debug_image) {
+                result.debug_image_url = `http://localhost:3001/uploads/${result.debug_image}`;
             }
             res.json(result);
         } catch (e) {

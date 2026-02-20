@@ -77,11 +77,7 @@ class VisionModule:
             y_top = float(y)
             y_bottom = float(y + h)
             
-            # For this boilerplate, we'll assume the bounding box encompasses the wicks perfectly.
-            # A more advanced version would segment the thick body vs the thin wick inside this bounding box.
-            
             # Simple assumption: Body takes up middle 50% for now
-            # TODO: Add logic to find exact body coordinates inside `cnt`
             body_top = y_top + (h * 0.25)
             body_bottom = y_bottom - (h * 0.25)
             
@@ -107,34 +103,35 @@ class VisionModule:
             
         return processed
 
-if __name__ == "__main__":
-    import os
-    
-    # 1. Create a dummy test image if it doesn't exist so we can run the script
-    test_img_path = "data/input/chart_screenshot.png"
-    if not os.path.exists(test_img_path):
-        os.makedirs("data/input", exist_ok=True)
-        # Create a blank dark image
-        img = np.zeros((400, 400, 3), dtype=np.uint8)
-        # Draw a bullish green candle
-        cv2.rectangle(img, (100, 200), (120, 100), (0, 255, 0), -1) # Body
-        cv2.line(img, (110, 250), (110, 50), (0, 255, 0), 2) # Wick
-        # Draw a bearish red candle
-        cv2.rectangle(img, (200, 100), (220, 250), (0, 0, 255), -1) # Body
-        cv2.line(img, (210, 80), (210, 300), (0, 0, 255), 2) # Wick
-        # Draw a second bearish red candle 
-        cv2.rectangle(img, (250, 200), (270, 320), (0, 0, 255), -1) # Body
-        cv2.line(img, (260, 180), (260, 350), (0, 0, 255), 2) # Wick
-        cv2.imwrite(test_img_path, img)
-        print("Generated dummy test image with 3 candles for testing.")
+    def draw_debug(self, output_path: str, candles: List[RawCandle]):
+        """Draws detected candles on the original image for debugging."""
+        debug_img = self.image.copy()
 
-    # 2. Run the Vision Module
-    print("Initializing Vision Module...")
-    try:
-        vision = VisionModule(test_img_path)
-        raw_data = vision.exact_candles()
-        print(f"Detected {len(raw_data)} candles from the image.")
-        for idx, c in enumerate(raw_data):
-            print(f"Candle {idx+1}: {c.is_bullish=}, X={c.x_center}, Open/Close={c.y_open}/{c.y_close}")
-    except Exception as e:
-        print(f"Error running vision module: {e}")
+        for c in candles:
+            color = (0, 255, 0) if c.is_bullish else (0, 0, 255)
+            # Draw wick
+            start_point = (int(c.x_center), int(c.y_high))
+            end_point = (int(c.x_center), int(c.y_low))
+            cv2.line(debug_img, start_point, end_point, color, 2)
+
+            # Draw body box
+            # y_open and y_close are top/bottom of body.
+            # We need to construct the rect. width is stored.
+            x_left = int(c.x_center - (c.width / 2))
+            x_right = int(c.x_center + (c.width / 2))
+
+            # cv2 rectangle takes top-left and bottom-right
+            # y coordinates: min of open/close is top, max is bottom
+            y_top_body = int(min(c.y_open, c.y_close))
+            y_bottom_body = int(max(c.y_open, c.y_close))
+
+            cv2.rectangle(debug_img, (x_left, y_top_body), (x_right, y_bottom_body), color, 2)
+
+            # Put text index
+            cv2.putText(debug_img, ".", (int(c.x_center), int(c.y_high)-5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        cv2.imwrite(output_path, debug_img)
+
+if __name__ == "__main__":
+    pass

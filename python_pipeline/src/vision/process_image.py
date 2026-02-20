@@ -17,8 +17,12 @@ def main():
         vision = VisionModule(args.image_path)
         raw_candles = vision.exact_candles()
 
+        # Generate debug image next to original
+        debug_path = args.image_path + "_debug.jpg"
+        vision.draw_debug(debug_path, raw_candles)
+
         if not raw_candles:
-            print(json.dumps({'candles': []}))
+            print(json.dumps({'candles': [], 'debug_image': debug_path}))
             return
 
         # Convert raw pixel data to a normalized/relative coordinate system or price
@@ -60,7 +64,7 @@ def main():
                 'low': reference_height - c.y_low,
             })
 
-        print(json.dumps({'candles': candles_data}))
+        print(json.dumps({'candles': candles_data, 'debug_image': os.path.basename(debug_path)}))
 
     except Exception as e:
         print(json.dumps({'error': str(e)}))
